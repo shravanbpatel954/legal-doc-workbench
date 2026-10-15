@@ -4,7 +4,7 @@
 {% block head %}{% if doc.is_working and not editing %}<meta http-equiv="refresh" content="3">{% endif %}{% endblock %}
 
 {% block content %}
-<a class="back" href="{% url 'index' %}{% if term %}?q={{ term|urlencode }}{% endif %}">&larr; Back to documents</a>
+<a class="back" href="{% url 'index' %}{% if term %}?q={{ term|urlencode }}{% endif %}">&larr ; Back to documents</a>
 
 <div class="card">
   <div class="doc-head">
