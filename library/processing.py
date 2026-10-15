@@ -27,7 +27,6 @@ def _in_thread(document_id):
 
 
 def process_document(document_id):
-    """Do every page that is not completed yet. Running it again only redoes the failures."""
     document = Document.objects.get(pk=document_id)
     Document.objects.filter(pk=document.pk).update(status=Document.Status.PROCESSING)
 

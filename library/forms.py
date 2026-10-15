@@ -7,12 +7,12 @@ from .pdf_utils import check_pdf, sha256_of
 
 
 def clean_name(value):
-    """Trim and collapse spaces so "  Acme   Ltd " and "Acme Ltd" are the same name."""
+    """Trim and collapse spaces"""
     return " ".join(value.split())
 
 
 def get_or_create_named(model, name):
-    """Find a company/type by name (ignoring upper/lower case), and create it if it is new."""
+    """Find a company/type by name \ and create it if it is new."""
     name = clean_name(name)
     return model.objects.filter(name__iexact=name).first() or model.objects.create(name=name)
 
@@ -106,6 +106,5 @@ class SearchForm(forms.Form):
             "placeholder": "Search by title, file name, company, type, keyword, or words inside the pages",
             "autofocus": True,
         })
-        # the three main dropdowns apply as soon as they change
         for name in ("company", "document_type", "status"):
             self.fields[name].widget.attrs["onchange"] = "this.form.submit()"

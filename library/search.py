@@ -1,25 +1,14 @@
-"""Everything about searching. Views hand in the cleaned search form, and get back querysets."""
 import re
-
 from django.db.models import Count, Exists, OuterRef, Q
-
 from .models import Document, DocumentPage, Keyword
 
-
 def page_has_text(term):
-    """Match the corrected text when somebody fixed the page, otherwise the OCR text."""
     return (
         Q(is_corrected=False, ocr_text__icontains=term)
         | Q(is_corrected=True, corrected_text__icontains=term)
     )
 
-
-def search_documents(filters):
-    """Documents matching the search box and all the filters.
-
-    The search text is looked for in the title, file name, company, type, keywords,
-    the document id and in the text of every page.
-    """
+def search_documents(filters):    
     docs = Document.objects.select_related("company", "document_type").prefetch_related("keywords")
 
     if filters.get("company"):
@@ -43,7 +32,6 @@ def search_documents(filters):
         docs = docs.filter(matches)
 
     return docs
-
 
 def matching_pages(filters):
     """Pages whose text contains the search text. Empty when nothing was typed."""

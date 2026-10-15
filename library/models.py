@@ -29,15 +29,11 @@ class Keyword(models.Model):
 
     class Meta:
         ordering = ["word"]
-
     def __str__(self):
         return self.word
 
-
 def pdf_path(instance, filename):
-    # random name on disk, the real name is kept in original_filename
     return f"documents/{uuid.uuid4().hex}.pdf"
-
 
 class Document(models.Model):
     class Status(models.TextChoices):
@@ -77,18 +73,15 @@ class Document(models.Model):
             return 0
         return round(self.pages_processed * 100 / self.page_count)
 
-
 class DocumentPage(models.Model):
     class Method(models.TextChoices):
         TEXT = "TEXT", "Digital text"
         OCR = "OCR", "OCR"
-
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
         PROCESSING = "PROCESSING", "Processing"
         COMPLETED = "COMPLETED", "Completed"
         FAILED = "FAILED", "Failed"
-
     document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name="pages")
     page_number = models.PositiveIntegerField()
     extraction_method = models.CharField(max_length=10, choices=Method.choices, blank=True)

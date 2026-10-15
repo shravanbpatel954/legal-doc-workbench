@@ -25,11 +25,7 @@
   <datalist id="company-options">{% for company in companies %}<option value="{{ company.name }}">{% endfor %}</datalist>
   <datalist id="type-options">{% for type in types %}<option value="{{ type.name }}">{% endfor %}</datalist>
 
-  <p class="muted">
-    {% if not document %}The title comes from the PDF filename. Other details are suggested from the PDF; check them and change anything that is wrong. {% endif %}
-    A company or type that is not in the list is added when you save.
-  </p>
-  {% if not document %}<p class="muted">Upload date and time are recorded automatically.</p>{% endif %}
+  
 
   <div class="actions">
     <button type="submit">{% if document %}Save{% else %}Upload{% endif %}</button>

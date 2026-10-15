@@ -54,23 +54,14 @@ USE_TZ = True
 STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Uploaded PDFs are saved here. Only the relative path goes in the database.
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# ---- Our own settings ----
 MAX_UPLOAD_SIZE_MB = 50
 DOCUMENT_DELETE_PASSWORD_HASH = "pbkdf2_sha256$1000000$WKytm5oj2ebJM3ccBGlt2v$ympOEAJE45MLQtbI8iBL9qKY9j2Hm/Jd/MAcxe9Enik="
 
-# A page with fewer letters/digits than this is treated as scanned and sent to OCR.
 OCR_MIN_CHARS = 20
 OCR_DPI = 300
 OCR_LANG = "eng"
-
-# Leave empty if tesseract is on your PATH. On Windows, for example:
-# TESSERACT_CMD = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 TESSERACT_CMD = ""
-
-# True: process in a background thread so the page count moves while you watch.
-# False: process inside the request (the tests use this).
 PROCESS_IN_BACKGROUND = True
