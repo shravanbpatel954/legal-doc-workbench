@@ -1,0 +1,26 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Legal Documents{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'library/style.css' %}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="topbar">
+    <div class="inner">
+      <a class="brand" href="{% url 'index' %}">Legal Documents</a>
+      <nav><a href="{% url 'queue' %}">Processing queue</a></nav>
+      <a class="button" href="{% url 'upload' %}">Upload PDF</a>
+    </div>
+  </div>
+
+  <main>
+    {% for message in messages %}
+      <p class="notice">{{ message }}</p>
+    {% endfor %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

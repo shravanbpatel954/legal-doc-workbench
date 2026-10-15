@@ -1,0 +1,9 @@
+{% if page.paginator.num_pages > 1 %}
+<div class="pager">
+  <span>Page {{ page.number }} of {{ page.paginator.num_pages }}</span>
+  <span class="buttons">
+    {% if page.has_previous %}<a class="button light" href="?{% if querystring %}{{ querystring }}&amp;{% endif %}page={{ page.previous_page_number }}">Previous</a>{% endif %}
+    {% if page.has_next %}<a class="button light" href="?{% if querystring %}{{ querystring }}&amp;{% endif %}page={{ page.next_page_number }}">Next</a>{% endif %}
+  </span>
+</div>
+{% endif %}

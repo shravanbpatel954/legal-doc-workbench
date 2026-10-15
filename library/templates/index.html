@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% load library_extras %}
+{% block title %}Documents{% endblock %}
+
+{% block content %}
+<form class="search" method="get" action="{% url 'index' %}">
+  <div class="search-row">
+    {{ form.q }}
+    <button type="submit">Search</button>
+  </div>
+
+  <div class="filters">
+    {{ form.company }}
+    {{ form.document_type }}
+    {{ form.status }}
+  </div>
+
+  {% if searching %}<a class="clear" href="{% url 'index' %}">Clear search and filters</a>{% endif %}
+</form>
+
+{% if form.errors %}
+  <p class="notice error">
+    {% for field in form %}{% for error in field.errors %}{{ field.label }}: {{ error }} {% endfor %}{% endfor %}
+  </p>
+{% endif %}
+
+{% if page.object_list %}
+  <p class="count">
+    {{ page.paginator.count }} document{{ page.paginator.count|pluralize }}{% if term %} matching "{{ term }}"{% endif %}
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Document</th><th>Company</th><th>Type</th><th>Uploaded</th><th>Pages</th><th>Status</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for doc in page %}
+      <tr>
+        <td class="title">
+          <a href="{% url 'document' doc.pk %}{% if term %}?q={{ term|urlencode }}{% endif %}">{{ doc.title }}</a>
+          <div class="muted">{{ doc.original_filename }}</div>
+          {% for keyword in doc.keywords.all|slice:":5" %}
+            <a class="tag" href="?q={{ keyword.word|urlencode }}">{{ keyword.word }}</a>
+          {% endfor %}
+
+          {% for hit in doc.hits %}
+            <a class="hit" href="{% url 'document_page' doc.pk hit.page_number %}?q={{ term|urlencode }}">
+              <b>Page {{ hit.page_number }}</b>{{ hit.snippet|highlight:term }}
+            </a>
+          {% endfor %}
+          {% if doc.more_hits %}
+            <a class="more-hits" href="{% url 'document' doc.pk %}?q={{ term|urlencode }}">+ {{ doc.more_hits }} more matching page{{ doc.more_hits|pluralize }}</a>
+          {% endif %}
+        </td>
+        <td>{{ doc.company }}</td>
+        <td>{{ doc.document_type }}</td>
+        <td>{{ doc.uploaded_at|date:"j M Y, H:i" }}</td>
+        <td>{{ doc.page_count }}</td>
+        <td>
+          <span class="badge {{ doc.status|lower }}">{{ doc.get_status_display }}</span>
+          {% if doc.is_working %}<div class="muted">{{ doc.pages_processed }} / {{ doc.page_count }}</div>{% endif %}
+        </td>
+        <td>
+          <form method="post" action="{% url 'delete_document' doc.pk %}" onsubmit="return confirmDocumentDelete(this)">
+            {% csrf_token %}
+            <input type="hidden" name="password">
+            <button class="danger" type="submit">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% include "_pager.html" %}
+
+{% elif searching %}
+  <div class="card empty">
+    Nothing found{% if term %} for "{{ term }}"{% endif %}. Try fewer words or remove a filter.
+  </div>
+{% else %}
+  <div class="card empty">
+    No documents yet. <a href="{% url 'upload' %}">Upload a PDF</a> to get started.
+  </div>
+{% endif %}
+
+<script>
+  function confirmDocumentDelete(form) {
+    var password = window.prompt("Enter the password to permanently delete this PDF:");
+    if (password === null || password === "") return false;
+    if (!window.confirm("Delete this PDF and all of its extracted data permanently?")) return false;
+    form.elements.password.value = password;
+    return true;
+  }
+</script>
+{% endblock %}

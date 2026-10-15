@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}{% if document %}Edit details{% else %}Upload a PDF{% endif %}{% endblock %}
+
+{% block content %}
+<h1>{% if document %}Edit details: {{ document.title }}{% else %}Upload a PDF{% endif %}</h1>
+
+<form class="card form-card" method="post" enctype="multipart/form-data" id="details-form">
+  {% csrf_token %}
+
+  {% for field in form %}
+    <div class="field" data-field="{{ field.name }}">
+      <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {% if field.name == "file" %}
+        <div class="dropzone" id="dropzone">
+          Drag a PDF here, or choose one
+          {{ field }}
+        </div>
+      {% else %}
+        {{ field }}
+      {% endif %}
+      {% for error in field.errors %}<p class="error">{{ error }}</p>{% endfor %}
+    </div>
+  {% endfor %}
+
+  <datalist id="company-options">{% for company in companies %}<option value="{{ company.name }}">{% endfor %}</datalist>
+  <datalist id="type-options">{% for type in types %}<option value="{{ type.name }}">{% endfor %}</datalist>
+
+  <p class="muted">
+    {% if not document %}The title comes from the PDF filename. Other details are suggested from the PDF; check them and change anything that is wrong. {% endif %}
+    A company or type that is not in the list is added when you save.
+  </p>
+  {% if not document %}<p class="muted">Upload date and time are recorded automatically.</p>{% endif %}
+
+  <div class="actions">
+    <button type="submit">{% if document %}Save{% else %}Upload{% endif %}</button>
+    <a class="button light" href="{% if document %}{% url 'document' document.pk %}{% else %}{% url 'index' %}{% endif %}">Cancel</a>
+  </div>
+</form>
+
+{% if not document %}
+<script>
+  var form = document.getElementById("details-form");
+  var zone = document.getElementById("dropzone");
+  var fileInput = zone.querySelector("input");
+  var names = ["title", "company", "document_type"];
+  var touched = {};
+
+  function box(name) { return form.querySelector('[data-field="' + name + '"]'); }
+  function input(name) { return box(name).querySelector("input"); }
+
+  // a field the person typed in is never overwritten by a guess
+  names.forEach(function (name) {
+    input(name).addEventListener("input", function () { touched[name] = true; });
+  });
+
+  // one small message under a field: type is "error", "wait" or "ok"
+  function say(name, text, type) {
+    var old = box(name).querySelector(".hint, .error.js");
+    if (old) old.remove();
+    if (!text) return;
+    var p = document.createElement("p");
+    p.className = type === "error" ? "error js" : "hint " + type;
+    p.textContent = text;
+    box(name).appendChild(p);
+  }
+
+  fileInput.addEventListener("change", function () {
+    var file = fileInput.files[0];
+    say("file", "", "");
+    if (!file) return;
+
+    say("file", "Reading the PDF...", "wait");
+    var data = new FormData();
+    data.append("file", file);
+
+    fetch("{% url 'upload_detect' %}", {
+      method: "POST",
+      body: data,
+      headers: { "X-CSRFToken": form.querySelector("[name=csrfmiddlewaretoken]").value }
+    })
+      .then(function (response) { return response.json(); })
+      .then(function (result) {
+        if (result.error) {
+          say("file", result.error, "error");
+          return;
+        }
+        say("file", result.pages + " page" + (result.pages === 1 ? "" : "s") + ". The title comes from the filename; other details were suggested from the PDF.", "ok");
+        names.forEach(function (name) {
+          if (result[name] && !touched[name]) input(name).value = result[name];
+        });
+      })
+      .catch(function () {
+        say("file", "Could not read the PDF here. You can still type the details yourself.", "error");
+      });
+  });
+
+  zone.addEventListener("dragover", function (e) { e.preventDefault(); zone.classList.add("over"); });
+  zone.addEventListener("dragleave", function () { zone.classList.remove("over"); });
+  zone.addEventListener("drop", function (e) {
+    e.preventDefault();
+    zone.classList.remove("over");
+    fileInput.files = e.dataTransfer.files;
+    fileInput.dispatchEvent(new Event("change"));
+  });
+</script>
+{% endif %}
+{% endblock %}

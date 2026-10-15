@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% load library_extras %}
+{% block title %}{{ doc.title }}{% endblock %}
+{% block head %}{% if doc.is_working and not editing %}<meta http-equiv="refresh" content="3">{% endif %}{% endblock %}
+
+{% block content %}
+<a class="back" href="{% url 'index' %}{% if term %}?q={{ term|urlencode }}{% endif %}">&larr; Back to documents</a>
+
+<div class="card">
+  <div class="doc-head">
+    <h1>{{ doc.title }}</h1>
+    <span>
+      <span class="badge {{ doc.status|lower }}">{{ doc.get_status_display }}</span>
+      <a class="button light" href="{% url 'edit_details' doc.pk %}">Edit details</a>
+    </span>
+  </div>
+
+  <dl class="meta">
+    <div><dt>Company</dt><dd>{{ doc.company }}</dd></div>
+    <div><dt>Type</dt><dd>{{ doc.document_type }}</dd></div>
+    <div><dt>Pages</dt><dd>{{ doc.page_count }}</dd></div>
+    <div><dt>File</dt><dd>{{ doc.original_filename }}</dd></div>
+    <div><dt>Uploaded</dt><dd>{{ doc.uploaded_at|date:"j M Y, H:i" }}</dd></div>
+    <div><dt>Document ID</dt><dd>{{ doc.pk }}</dd></div>
+    <div><dt>Original</dt><dd><a href="{% url 'document_pdf' doc.pk %}#page={{ number }}" target="_blank">Open PDF</a></dd></div>
+  </dl>
+
+  {% if doc.is_working or failed_count %}
+    <p class="muted" style="margin-bottom: 0">
+      {{ doc.pages_processed }} of {{ doc.page_count }} pages read{% if failed_count %}, {{ failed_count }} failed{% endif %}
+    </p>
+    <div class="bar"><span style="width: {{ doc.progress }}%"></span></div>
+  {% endif %}
+
+  {% if doc.keywords.all %}
+    <p style="margin-bottom: 0">
+      {% for keyword in doc.keywords.all %}<a class="tag" href="{% url 'index' %}?q={{ keyword.word|urlencode }}">{{ keyword.word }}</a>{% endfor %}
+    </p>
+  {% endif %}
+</div>
+
+<div class="review">
+  <aside class="card">
+    <h2>Pages</h2>
+    <div class="tiles">
+      {% for tile in tiles %}
+        <a class="tile {{ tile.status }}{% if tile.hit %} hit{% endif %}{% if tile.number == number %} current{% endif %}"
+           href="{% url 'document_page' doc.pk tile.number %}{% if term %}?q={{ term|urlencode }}{% endif %}">{{ tile.number }}</a>
+      {% endfor %}
+    </div>
+    <div class="block-links">
+      {% if block_before %}<a href="{% url 'document_page' doc.pk block_before %}{% if term %}?q={{ term|urlencode }}{% endif %}">&larr; Earlier pages</a>{% else %}<span></span>{% endif %}
+      {% if block_after %}<a href="{% url 'document_page' doc.pk block_after %}{% if term %}?q={{ term|urlencode }}{% endif %}">Later pages &rarr;</a>{% endif %}
+    </div>
+    {% if term %}
+      <p class="muted" style="margin-bottom: 0">Underlined pages contain "{{ term }}" ({{ match_count }} in total).</p>
+    {% endif %}
+  </aside>
+
+  <section class="card">
+    <div class="toolbar">
+      <span class="grow">Page {{ number }} of {{ doc.page_count }}</span>
+      <form method="get" action="{% url 'document_page' doc.pk number %}">
+        <input type="text" name="q" value="{{ term }}" placeholder="Find in this document">
+        <button class="light" type="submit">Find</button>
+      </form>
+      {% if number > 1 %}<a class="button light" href="{% url 'document_page' doc.pk number|add:'-1' %}{% if term %}?q={{ term|urlencode }}{% endif %}">Previous</a>{% endif %}
+      {% if number < doc.page_count %}<a class="button light" href="{% url 'document_page' doc.pk number|add:'1' %}{% if term %}?q={{ term|urlencode }}{% endif %}">Next</a>{% endif %}
+      {% if next_match %}<a class="button" href="{% url 'document_page' doc.pk next_match %}?q={{ term|urlencode }}">Next match</a>{% endif %}
+    </div>
+
+    {% if not page %}
+      <p class="muted">This page has not been read yet. It will show up here shortly.</p>
+    {% else %}
+      <p class="muted page-info">
+        <span class="badge {{ page.processing_status|lower }}">{{ page.get_processing_status_display }}</span>
+        {% if page.extraction_method %}{{ page.get_extraction_method_display }}{% endif %}
+        {% if page.ocr_confidence %}&middot; confidence {{ page.ocr_confidence }}%{% endif %}
+        {% if page.processing_time is not None %}&middot; {{ page.processing_time }} s{% endif %}
+        {% if page.is_corrected %}&middot; edited by you{% endif %}
+      </p>
+
+      {% if page.processing_status == "FAILED" %}
+        <p class="notice error">{{ page.error_message }}</p>
+        <form method="post" action="{% url 'page_retry' doc.pk number %}">
+          {% csrf_token %}
+          <button type="submit">Retry this page</button>
+        </form>
+
+      {% elif editing %}
+        <form method="post" action="{% url 'document_page' doc.pk number %}">
+          {% csrf_token %}
+          <textarea class="page-text" name="text">{{ page.text }}</textarea>
+          <div class="actions">
+            <button type="submit">Save</button>
+            <a class="button light" href="{% url 'document_page' doc.pk number %}">Cancel</a>
+          </div>
+        </form>
+
+      {% elif page.processing_status == "COMPLETED" %}
+        <div class="page-text">{% if page.text %}{{ page.text|highlight:term }}{% else %}<span class="muted">No text was found on this page.</span>{% endif %}</div>
+        <div class="actions">
+          <a class="button light" href="{% url 'document_page' doc.pk number %}?edit=1">Edit text</a>
+          {% if page.is_corrected %}
+            <form method="post" action="{% url 'document_page' doc.pk number %}">
+              {% csrf_token %}
+              <button class="light" name="revert" value="1" type="submit">Back to extracted text</button>
+            </form>
+          {% endif %}
+        </div>
+      {% endif %}
+    {% endif %}
+  </section>
+</div>
+{% endblock %}
