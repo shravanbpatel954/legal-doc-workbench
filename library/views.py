@@ -15,11 +15,10 @@ from .processing import process_page, refresh_progress, save_keywords, start_pro
 from .search import add_page_hits, page_has_text, search_documents
 
 PER_PAGE = 10
-NAV_BLOCK = 60  # page numbers shown at a time in the page navigator
+NAV_BLOCK = 60  
 
 
 def paginate(request, items, per_page=PER_PAGE):
-    """One page of items, plus the current query string without ?page= for the pager links."""
     page = Paginator(items, per_page).get_page(request.GET.get("page"))
     params = request.GET.copy()
     params.pop("page", None)
@@ -27,7 +26,6 @@ def paginate(request, items, per_page=PER_PAGE):
 
 
 def index(request):
-    """The main page: the document list and the search are the same thing."""
     form = SearchForm(request.GET)
     filters = form.cleaned_data if form.is_valid() else {}
 
@@ -46,7 +44,6 @@ def index(request):
 
 
 def form_page(request, form, document=None):
-    """Upload and edit share one screen. The lists feed the company/type suggestions."""
     return render(request, "document_form.html", {
         "form": form,
         "document": document,
@@ -67,7 +64,6 @@ def upload(request):
 
 @require_POST
 def upload_detect(request):
-    """Called by the upload page as soon as a file is chosen: check it and guess its details."""
     upload = request.FILES.get("file")
     if not upload:
         return JsonResponse({"error": "No file was received."})
@@ -125,7 +121,6 @@ def delete_document(request, pk):
 
 
 def queue(request):
-    """Everything that is not finished yet, or had a problem."""
     waiting = Document.objects.exclude(status=Document.Status.COMPLETED).select_related("company")
     page, querystring = paginate(request, waiting, per_page=25)
     return render(request, "queue.html", {
@@ -136,14 +131,13 @@ def queue(request):
 
 
 def document(request, pk, number=None):
-    """Document details and page review on one screen."""
     doc = get_object_or_404(Document.objects.select_related("company", "document_type"), pk=pk)
     term = request.GET.get("q", "").strip()
     number = number or 1
     if number > max(doc.page_count, 1):
         raise Http404("No such page")
 
-    page = doc.pages.filter(page_number=number).first()  # missing until reading has started
+    page = doc.pages.filter(page_number=number).first() 
 
     if request.method == "POST" and page:
         if "revert" in request.POST:
@@ -194,6 +188,5 @@ def page_retry(request, pk, number):
 
 
 def document_pdf(request, pk):
-    """Serve the original PDF through the app, so file paths are never shown to the browser."""
     doc = get_object_or_404(Document, pk=pk)
     return FileResponse(doc.file.open("rb"), content_type="application/pdf", filename=doc.original_filename)

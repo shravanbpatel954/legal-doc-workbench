@@ -34,7 +34,6 @@ def search_documents(filters):
     return docs
 
 def matching_pages(filters):
-    """Pages whose text contains the search text. Empty when nothing was typed."""
     term = filters.get("q")
     if not term:
         return DocumentPage.objects.none()
@@ -42,10 +41,7 @@ def matching_pages(filters):
 
 
 def add_page_hits(documents, filters, show=3):
-    """Put the first few matching pages on each document, ready for the template.
-
-    Sets doc.hits (pages with a .snippet) and doc.more_hits (how many are not shown).
-    """
+  
     term = filters.get("q")
     pages = matching_pages(filters).filter(document__in=documents)
     totals = dict(pages.values_list("document_id").annotate(n=Count("pk")).order_by())
@@ -63,7 +59,6 @@ def add_page_hits(documents, filters, show=3):
 
 
 def make_snippet(text, term, width=80):
-    """A short piece of the page around the first match."""
     text = re.sub(r"\s+", " ", text).strip()
     at = text.lower().find(term.lower()) if term else -1
     if at == -1:

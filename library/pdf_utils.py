@@ -40,7 +40,6 @@ def page_needs_ocr(text):
 
 
 def ocr_page(page):
-    """OCR one PDF page. Returns (text, average confidence or None)."""
     pix = page.get_pixmap(dpi=settings.OCR_DPI)
     image = Image.frombytes("RGB", (pix.width, pix.height), pix.samples)
 

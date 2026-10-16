@@ -1,7 +1,5 @@
 import uuid
-
 from django.db import models
-
 
 class Company(models.Model):
     name = models.CharField(max_length=200, unique=True)
@@ -13,7 +11,6 @@ class Company(models.Model):
     def __str__(self):
         return self.name
 
-
 class DocumentType(models.Model):
     name = models.CharField(max_length=100, unique=True)
 
@@ -22,7 +19,6 @@ class DocumentType(models.Model):
 
     def __str__(self):
         return self.name
-
 
 class Keyword(models.Model):
     word = models.CharField(max_length=100, unique=True)

@@ -1,24 +1,18 @@
 from pathlib import Path
-
 from django import forms
-
 from .models import Company, Document, DocumentType
 from .pdf_utils import check_pdf, sha256_of
 
-
 def clean_name(value):
-    """Trim and collapse spaces"""
     return " ".join(value.split())
 
 
 def get_or_create_named(model, name):
-    """Find a company/type by name \ and create it if it is new."""
     name = clean_name(name)
     return model.objects.filter(name__iexact=name).first() or model.objects.create(name=name)
 
 
 def check_upload(filename, data):
-    """Validate a PDF and make sure it is new. Returns (page_count, sha256) or raises ValueError."""
     page_count = check_pdf(filename, data)
     sha256 = sha256_of(data)
     same = Document.objects.filter(sha256=sha256).first()
@@ -28,8 +22,6 @@ def check_upload(filename, data):
 
 
 class DetailsForm(forms.Form):
-    """The details of a document. Company and type are typed in; a new name is created on save."""
-
     title = forms.CharField(max_length=255)
     company = forms.CharField(max_length=200, widget=forms.TextInput(attrs={
         "list": "company-options", "placeholder": "Pick one or type a new company", "autocomplete": "off"}))
@@ -45,7 +37,6 @@ class DetailsForm(forms.Form):
         return clean_name(self.cleaned_data["document_type"])
 
     def apply_to(self, document):
-        """Copy the form values onto a document (creating the company/type if needed)."""
         document.title = self.cleaned_data["title"]
         document.company = get_or_create_named(Company, self.cleaned_data["company"])
         document.document_type = get_or_create_named(DocumentType, self.cleaned_data["document_type"])
