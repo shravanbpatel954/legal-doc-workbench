@@ -12,7 +12,6 @@ page
 
 
 def top_keywords(text, how_many=10):
-    """Most common meaningful words in the text, most frequent first."""
     words = re.findall(r"[a-z]{3,}", text.lower())
     counts = Counter(word for word in words if word not in STOP_WORDS)
     return [word for word, _ in counts.most_common(how_many)]

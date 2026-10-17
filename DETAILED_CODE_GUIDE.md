@@ -305,13 +305,13 @@ Settings live in [legal_dms/settings.py](legal_dms/settings.py).
 | Setting | Current behavior |
 |---|---|
 | `BASE_DIR` | Resolves to the `backend/` project directory. |
-| `DEBUG` | `False`. |
+| `DJANGO_DEBUG` | Environment switch for Django's `DEBUG` setting; defaults to `true` for local `runserver` static-file serving. Set to `false` in deployment. |
 | `ALLOWED_HOSTS` | Allows `localhost` and `127.0.0.1`. |
 | `INSTALLED_APPS` | Django admin/auth/contenttypes/sessions/messages/staticfiles plus `library`. |
 | `MIDDLEWARE` | Security, sessions, common request handling, CSRF, authentication, and flash messages. |
 | `DATABASES` | SQLite at `BASE_DIR / "db.sqlite3"`, with a 20-second lock timeout. |
 | `TIME_ZONE`, `USE_TZ` | Uses `Asia/Kolkata` with timezone-aware datetimes. |
-| `STATIC_URL` | URL prefix for CSS/static assets. |
+| `STATIC_URL` | Root-relative URL prefix for CSS/static assets. `STATIC_ROOT` is the collection destination used by `collectstatic`. |
 | `MEDIA_ROOT`, `MEDIA_URL` | Filesystem root and URL prefix for uploaded files. The PDF view streams files through Django. |
 | `MAX_UPLOAD_SIZE_MB` | Maximum upload size: 50 MB. |
 | `OCR_MIN_CHARS` | Fewer than 20 alphanumeric characters triggers OCR. |

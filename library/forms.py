@@ -6,11 +6,9 @@ from .pdf_utils import check_pdf, sha256_of
 def clean_name(value):
     return " ".join(value.split())
 
-
 def get_or_create_named(model, name):
     name = clean_name(name)
     return model.objects.filter(name__iexact=name).first() or model.objects.create(name=name)
-
 
 def check_upload(filename, data):
     page_count = check_pdf(filename, data)
@@ -19,7 +17,6 @@ def check_upload(filename, data):
     if same:
         raise ValueError(f'This file is already in the system as "{same.title}" (document {same.pk}).')
     return page_count, sha256
-
 
 class DetailsForm(forms.Form):
     title = forms.CharField(max_length=255)
@@ -41,10 +38,8 @@ class DetailsForm(forms.Form):
         document.company = get_or_create_named(Company, self.cleaned_data["company"])
         document.document_type = get_or_create_named(DocumentType, self.cleaned_data["document_type"])
 
-
 class UploadForm(DetailsForm):
     field_order = ["file", "title", "company", "document_type"]
-
     title = forms.CharField(max_length=255, required=False)
     file = forms.FileField(label="PDF file", widget=forms.FileInput(attrs={"accept": ".pdf,application/pdf"}))
 
@@ -90,6 +85,10 @@ class SearchForm(forms.Form):
     document_type = forms.ModelChoiceField(DocumentType.objects.all(), required=False, empty_label="All types")
     status = forms.ChoiceField(required=False, label="Status",
                                choices=[("", "Any status")] + Document.Status.choices)
+    date_from = forms.DateField(required=False, label="From",
+                                widget=forms.DateInput(attrs={"type": "date"}))
+    date_to = forms.DateField(required=False, label="To",
+                              widget=forms.DateInput(attrs={"type": "date"}))
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -97,5 +96,5 @@ class SearchForm(forms.Form):
             "placeholder": "Search by title, file name, company, type, keyword, or words inside the pages",
             "autofocus": True,
         })
-        for name in ("company", "document_type", "status"):
+        for name in ("company", "document_type", "status", "date_from", "date_to"):
             self.fields[name].widget.attrs["onchange"] = "this.form.submit()"

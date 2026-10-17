@@ -6,7 +6,6 @@ urlpatterns = [
     path("", views.index, name="index"),
     path("upload/", views.upload, name="upload"),
     path("upload/detect/", views.upload_detect, name="upload_detect"),
-    path("queue/", views.queue, name="queue"),
     path("documents/<int:pk>/", views.document, name="document"),
     path("documents/<int:pk>/edit/", views.edit_details, name="edit_details"),
     path("documents/<int:pk>/delete/", views.delete_document, name="delete_document"),

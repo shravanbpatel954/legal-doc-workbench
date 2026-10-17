@@ -280,7 +280,7 @@ python manage.py shell -c "from django.contrib.auth.hashers import make_password
 
 Paste the output into `DOCUMENT_DELETE_PASSWORD_HASH`. Do not commit a real password or a production hash to a public repository; read it from an environment variable instead.
 
-Before any real deployment also change `SECRET_KEY`, set `DEBUG = False` and set `ALLOWED_HOSTS`.
+For local development, `DJANGO_DEBUG` defaults to `true`, so `runserver` serves the CSS. Before deployment, set the `DJANGO_DEBUG` environment variable to `false`, change `SECRET_KEY`, and set `ALLOWED_HOSTS` for the deployment host.
 
 ---
 
@@ -442,7 +442,7 @@ The tests build real PDFs with PyMuPDF and run the full pipeline against a tempo
 | "This file is already in the system" | The same file content was uploaded before, under any name. Open the existing document from the message. |
 | Upload says "not a real PDF" | The file has a `.pdf` name but is not PDF data. Open it in a PDF viewer to check. |
 | No suggestions after choosing a file | The page has no recognizable company or type words, or the browser could not reach `/upload/detect/`. You can still type the values. |
-| Static files (CSS) missing | Use `python manage.py runserver` with `DEBUG = True`. For deployment run `collectstatic` and serve the static folder. |
+| Static files (CSS) missing | Locally, leave `DJANGO_DEBUG` unset or set it to `true` before running `python manage.py runserver`. For deployment, set `DJANGO_DEBUG=false`, run `python manage.py collectstatic`, and serve the configured `STATIC_ROOT` folder. |
 | `no such table` | Run `python manage.py migrate`. |
 
 ---

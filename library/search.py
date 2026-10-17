@@ -1,5 +1,7 @@
+import datetime
 import re
 from django.db.models import Count, Exists, OuterRef, Q
+from django.utils import timezone
 from .models import Document, DocumentPage, Keyword
 
 def page_has_text(term):
@@ -17,6 +19,12 @@ def search_documents(filters):
         docs = docs.filter(document_type=filters["document_type"])
     if filters.get("status"):
         docs = docs.filter(status=filters["status"])
+    if filters.get("date_from"):
+        docs = docs.filter(uploaded_at__date__gte=filters["date_from"])
+    if filters.get("date_to"):
+        docs = docs.filter(uploaded_at__date__lte=filters["date_to"])
+    if filters.get("date"):
+        docs = docs.filter(uploaded_at__date=filters["date"])
     term = filters.get("q")
     if term:
         matches = (

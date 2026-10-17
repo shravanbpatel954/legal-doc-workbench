@@ -1,9 +1,10 @@
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = "dev-only-key-change-in-production"
-DEBUG = False
+DEBUG = os.environ.get("DJANGO_DEBUG", "true").strip().lower() in {"1", "true", "yes", "on"}
 ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
 
 INSTALLED_APPS = [
@@ -51,13 +52,14 @@ DATABASES = {
 
 TIME_ZONE = "Asia/Kolkata"
 USE_TZ = True
-STATIC_URL = "static/"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-MAX_UPLOAD_SIZE_MB = 50
+MAX_UPLOAD_SIZE_MB = 1000
 DOCUMENT_DELETE_PASSWORD_HASH = "pbkdf2_sha256$1000000$WKytm5oj2ebJM3ccBGlt2v$ympOEAJE45MLQtbI8iBL9qKY9j2Hm/Jd/MAcxe9Enik="
 
 OCR_MIN_CHARS = 20

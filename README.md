@@ -1,103 +1,261 @@
 # Legal Document Workbench
+**Live Application:** [http://16.171.13.28/](http://16.171.13.28/)
+**GitHub Repository:** [shravanbpatel954/legal-doc-workbench](https://github.com/shravanbpatel954/legal-doc-workbench)
 
-Upload legal PDFs, read them page by page (digital text, or OCR for scans), and search them.
-Django + SQLite, plain CSS. No Node, no CDN, so it also works offline.
+A Django-based legal document management system that allows users to upload PDF documents, extract text using PyMuPDF and Tesseract OCR, review extracted content, and search across documents and individual pages.
 
-## Screens
+The project combines **document intake, OCR processing, and legal document search** in a single application.
 
-| Screen | Address | What it does |
-|---|---|---|
-| Documents | `/` | The document list **and** the search. One box, a few filters. |
-| Upload | `/upload/` | Choose a PDF; title, company and type are suggested from it. Upload time is recorded automatically. |
-| Edit details | `/documents/<id>/edit/` | Change title, company and type later. Same form as upload. |
-| Processing queue | `/queue/` | Documents still being read or with problems, with progress. |
-| Document | `/documents/<id>/` | Details, page navigator, page text, edit, retry, next/previous. |
+## Features
 
-## Details from the PDF
+- Upload and validate PDF documents.
+- Extract digital text using PyMuPDF and scanned text using Tesseract OCR.
+- Automatically suggest document titles, companies, and document types.
+- Store extracted text and processing status for each page.
+- Edit and correct extracted page text.
+- Retry failed page processing.
+- Search documents by title, company, type, keywords, document ID, and page content.
+- Highlight search matches and navigate between matching pages.
+- Track document processing progress.
+- Detect duplicate uploads using SHA-256 hashing.
 
-When you choose a PDF on the upload screen, the page sends it to `/upload/detect/`. The server checks it
-(real PDF, size, corrupt, password, duplicate) and reads the first page (OCR if it is a scan), then guesses:
+## Tech Stack
 
-- **Title**: the first real line of the page (or the file name).
-- **Company**: a company already in the system that is named on the page; otherwise a name ending in
-  Pvt Ltd, Private Limited, Limited, Ltd, LLP, LLC, Inc, Corp, Company or Bank.
-- **Document type**: the type the page talks about most (mortgage, agreement, notice, invoice, ...). The list of
-  words is `TYPE_HINTS` in `library/detect.py`. Types already in your database are matched as well.
+| Technology | Purpose |
+|---|---|
+| Python | Core application logic |
+| Django 5 | Backend and web framework |
+| SQLite | Database for development |
+| PyMuPDF | PDF reading and text extraction |
+| Tesseract OCR | Text extraction from scanned pages |
+| HTML and CSS | User interface |
+| JavaScript | Upload interactions and page updates |
 
-These are only suggestions. Anything you have already typed is not overwritten, and everything can be changed.
-The rules are plain Python in `library/detect.py` (no LLM) and are easy to extend.
+The application uses Django templates and does not require Node.js or a frontend build system.
 
-## Company and type
+## Project Structure
 
-Both are text boxes with a list of the names that already exist.
-
-- Pick one from the list, or type a new name. A new name is **created when you save**, and shows up in the
-  list (and in the search filters) from then on.
-- Names are compared ignoring upper/lower case and extra spaces, so typing `acme  industries` reuses
-  `Acme Industries` instead of making a copy.
-- Nothing is created if the upload is rejected.
-
-## Search (main page)
-
-- The text is looked for in **title, file name, company, type, keywords, document ID and the text of every page**.
-- Documents that match on page text show the matching pages with a highlighted snippet under the title.
-  Click a snippet to open that page; "+ N more matching pages" opens the document with every match marked.
-- The company, type and status dropdowns apply as soon as you change them. Keyword tags use the main search box.
-- Several words are searched as an exact phrase (`property tax`, not "tax on property").
-
-## Setup
-
-1. Install Tesseract OCR (Windows: https://github.com/UB-Mannheim/tesseract/wiki).
-   If it is not on your PATH, set `TESSERACT_CMD` in `legal_dms/settings.py`.
-2. In this folder:
-
+```text
+backend/
+├── manage.py
+├── requirements.txt
+│
+├── legal_dms/
+│   ├── settings.py
+│   ├── urls.py
+│   └── wsgi.py
+│
+├── library/
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   ├── forms.py
+│   ├── admin.py
+│   ├── tests.py
+│   │
+│   ├── pdf_utils.py
+│   ├── processing.py
+│   ├── detect.py
+│   ├── search.py
+│   ├── keywords.py
+│   ├── sample_pdfs.py
+│   │
+│   ├── templates/
+│   ├── static/
+│   ├── templatetags/
+│   ├── migrations/
+│   │
+│   └── management/
+│       └── commands/
+│           ├── seed_sample_data.py
+│           └── make_sample_pdfs.py
+│
+└── media/
+    └── documents/
 ```
+
+*Note: The structure above represents the intended layout. `media/documents/` is created or populated as needed, depending on the configured file storage.*
+
+## Main Modules
+
+| File | Responsibility |
+|---|---|
+| `manage.py` | Django project management commands |
+| `legal_dms/settings.py` | Project settings, database, media, static files, and OCR configuration |
+| `legal_dms/urls.py` | Main URL routing |
+| `library/models.py` | Database models for documents, pages, companies, document types, and keywords |
+| `library/views.py` | Handles upload, search, document review, editing, and retry requests |
+| `library/urls.py` | Routes for the document management application |
+| `library/forms.py` | Upload forms, document editing forms, and input validation |
+| `library/pdf_utils.py` | PDF validation, hashing, text extraction helpers, and OCR utilities |
+| `library/processing.py` | Page-by-page extraction, OCR processing, and retry handling |
+| `library/detect.py` | Rule-based company and document type detection |
+| `library/search.py` | Document search, filtering, and matching-page retrieval |
+| `library/keywords.py` | Automatic keyword generation |
+| `library/admin.py` | Django admin configuration |
+| `library/tests.py` | Automated tests |
+| `library/templates/` | HTML templates for application screens |
+| `library/static/` | CSS and JavaScript assets |
+| `library/templatetags/` | Custom template filters, including search highlighting |
+| `library/migrations/` | Database schema migrations |
+| `library/management/commands/` | Commands for sample data and test PDF generation |
+
+## System Architecture
+
+The application follows a modular Django architecture. Views handle HTTP requests, while document processing, detection, and search are implemented in separate Python modules.
+
+```mermaid
+flowchart TD
+    A[User / Browser] --> B[Django Views]
+    B --> C[Forms and Validation]
+    B --> D[Document Processing]
+    B --> E[Search Module]
+    D --> F[PDF Utilities]
+    F --> G[PyMuPDF]
+    F --> H[Tesseract OCR]
+    D --> I[Database Models]
+    E --> I
+    I --> J[(SQLite Database)]
+    B --> K[Django Templates]
+    K --> A
+```
+
+## Workflow 1: Document Upload and Processing
+
+```mermaid
+flowchart TD
+    A[Upload PDF] --> B[Validate File]
+    B --> C{Valid PDF?}
+    C -- No --> D[Display Error]
+    C -- Yes --> E[Extract Page Text]
+    E --> F{Digital Text Available?}
+    F -- Yes --> G[Extract with PyMuPDF]
+    F -- No --> H[Run Tesseract OCR]
+    G --> I[Save Page Text and Status]
+    H --> I
+    I --> J{More Pages?}
+    J -- Yes --> E
+    J -- No --> K[Generate Keywords]
+    K --> L[Update Document Status]
+    L --> M[Display Document]
+```
+
+## Workflow 2: Document Search and Review
+
+```mermaid
+flowchart TD
+    A[Enter Search Query] --> B[Apply Search Filters]
+    B --> C[Search Document Metadata]
+    B --> D[Search Page Content]
+    C --> E[Combine Results]
+    D --> E
+    E --> F[Display Matching Documents]
+    F --> G[Show Matching Page Snippets]
+    G --> H[Open Selected Page]
+    H --> I[Highlight Search Matches]
+    I --> J[Review or Edit Page Text]
+```
+
+## Data Model
+
+The application stores document metadata separately from individual page content.
+
+```mermaid
+erDiagram
+    COMPANY ||--o{ DOCUMENT : associated_with
+    DOCUMENT_TYPE ||--o{ DOCUMENT : classifies
+    DOCUMENT ||--o{ DOCUMENT_PAGE : contains
+    DOCUMENT }o--o{ KEYWORD : tagged_with
+```
+
+- **Company:** Stores company names.
+- **DocumentType:** Stores document categories.
+- **Document:** Stores file information, metadata, upload details, and processing status.
+- **DocumentPage:** Stores page-wise extracted text, OCR confidence, processing status, and corrected text.
+- **Keyword:** Stores automatically generated search keywords.
+
+Each document page is stored separately, allowing users to search, review, edit, and retry individual pages.
+
+## Installation and Setup
+
+### Prerequisites
+
+- Python 3.11 or newer
+- Tesseract OCR installed and available on the system PATH
+- Git (optional)
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd <repository-folder>/backend
+```
+
+### 2. Create a Virtual Environment
+
+```bash
 python -m venv env
-env\Scripts\activate          (Linux/Mac: source env/bin/activate)
+```
+
+Activate it:
+
+**Windows**
+```bash
+env\Scripts\activate
+```
+
+**Linux / macOS**
+```bash
+source env/bin/activate
+```
+
+### 3. Install Dependencies
+
+```bash
 pip install -r requirements.txt
+```
+
+### 4. Configure the Application
+
+Configure the database, Django secret key, allowed hosts, and Tesseract executable path in `legal_dms/settings.py` or through environment variables, as appropriate.
+
+### 5. Apply Database Migrations
+
+```bash
 python manage.py migrate
+```
+
+### 6. Load Sample Data (Optional)
+
+```bash
 python manage.py seed_sample_data
-python manage.py createsuperuser
+python manage.py make_sample_pdfs
+```
+
+### 7. Start the Development Server
+
+```bash
 python manage.py runserver
 ```
 
-3. Open http://127.0.0.1:8000
+Open [http://127.0.0.1:8000/](http://127.0.0.1:8000/) in your browser.
 
-`seed_sample_data` adds the usual document types and three small sample documents, going through the same
-detect-and-save steps as the upload screen. `make_sample_pdfs` writes four test PDFs (three digital, one scanned)
-to `sample_pdfs/` so you can try the upload yourself. Run the tests with `python manage.py test`.
+## Application Routes
 
-A migration file is included. If you change `models.py`, run `python manage.py makemigrations library`.
+| Route | Description |
+|---|---|
+| `/` | Document listing and search |
+| `/upload/` | Upload a PDF document |
+| `/queue/` | View document processing status |
+| `/documents/<id>/` | View document details and pages |
+| `/documents/<id>/edit/` | Edit document metadata |
+| `/documents/<id>/pages/<n>/` | View or edit a specific page |
+| `/admin/` | Django administration |
 
-## Code layout
+## Design Principles
 
-```
-library/
-  models.py        Company, DocumentType, Keyword, Document, DocumentPage
-  detect.py        guesses company and type from the first page; title uses the filename
-  forms.py         validates and saves upload/edit details and search filters
-  search.py        all search and filter logic, no HTML in here
-  keywords.py      removes common words and stores the 10 most frequent words as search tags
-  processing.py    reads a PDF page by page, retry for one page
-  pdf_utils.py     PDF checks, SHA-256, "does this page need OCR", the OCR call, first-page peek
-  views.py         one function per screen
-  templates/       base, index, document_form (upload + edit), queue, document, small pager
-  static/library/style.css
-```
-
-## Notes
-
-- Page rows follow the field names in the task spec: `document`, `page_number`, `ocr_text`,
-  `ocr_confidence`, `processing_status`. A person's fix goes in `corrected_text` so an OCR retry never wipes it;
-  search and keywords use the corrected text when there is one.
-- A page is sent to OCR when it has fewer than `OCR_MIN_CHARS` letters/digits (`settings.py`).
-- The upload checks extension, real PDF signature, size limit, corruption, password protection, and
-  duplicates (SHA-256, whatever the file is called).
-- The uploaded PDF's filename (without `.pdf`) is the default title; no title is extracted from page text.
-- Use each document's **Delete** button to permanently remove the PDF and its extracted page data. The password is checked on the server; its hash is configured as `DOCUMENT_DELETE_PASSWORD_HASH` in `legal_dms/settings.py`.
-- PDFs are opened through `/documents/<id>/pdf/`, so file paths on disk are never sent to the browser.
-- The file is sent to the server twice on upload: once to read its details, once when you press Upload.
-- Search uses `icontains`, fine for a prototype. For large volumes move the page text to PostgreSQL
-  full-text search or a search engine; only `search.py` would change.
-- Reading runs in a background thread (`PROCESS_IN_BACKGROUND`). `process_document` and `process_page`
-  do not depend on the views, so they can be moved to Celery later.
+- **Page-level storage:** Each page has its own extracted text and processing status.
+- **Separation of concerns:** Search, PDF processing, detection, and views are maintained in separate modules.
+- **Safe text correction:** User-corrected text is stored separately from the original extracted text.
+- **Rule-based detection:** Company, document type, and keywords are identified without requiring an LLM.
+- **Searchable documents:** Metadata and page content are searchable from a single interface.
