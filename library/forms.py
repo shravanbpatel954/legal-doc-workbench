@@ -96,5 +96,5 @@ class SearchForm(forms.Form):
             "placeholder": "Search by title, file name, company, type, keyword, or words inside the pages",
             "autofocus": True,
         })
-        for name in ("company", "document_type", "status", "date_from", "date_to"):
+        for name in ("company", "document_type", "status"):
             self.fields[name].widget.attrs["onchange"] = "this.form.submit()"

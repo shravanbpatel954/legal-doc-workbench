@@ -29,6 +29,19 @@ def index(request):
     form = SearchForm(request.GET)
     filters = form.cleaned_data if form.is_valid() else {}
 
+    date_label = "Filter by date"
+    d_from = filters.get("date_from")
+    d_to = filters.get("date_to")
+    if d_from and d_to:
+        if d_from == d_to:
+            date_label = d_from.strftime("%d %b %Y")
+        else:
+            date_label = f"{d_from.strftime('%d %b')} – {d_to.strftime('%d %b %Y')}"
+    elif d_from:
+        date_label = f"From {d_from.strftime('%d %b %Y')}"
+    elif d_to:
+        date_label = f"Up to {d_to.strftime('%d %b %Y')}"
+
     page, querystring = paginate(request, search_documents(filters))
     documents = list(page.object_list)
     add_page_hits(documents, filters)
@@ -40,6 +53,8 @@ def index(request):
         "querystring": querystring,
         "term": filters.get("q", ""),
         "searching": any(request.GET.get(name) for name in form.fields),
+        "date_label": date_label,
+        "date_active": bool(d_from or d_to),
     })
 
 

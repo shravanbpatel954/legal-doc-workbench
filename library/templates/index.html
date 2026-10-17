@@ -13,12 +13,27 @@
     {{ form.company }}
     {{ form.document_type }}
     {{ form.status }}
-    <div class="date-range">
-      <span class="date-label">From</span>
-      {{ form.date_from }}
-      <span class="date-label">To</span>
-      {{ form.date_to }}
-    </div>
+    <details class="date-dropdown{% if date_active %} active{% endif %}">
+      <summary class="date-dropdown-toggle">
+        <span>{{ date_label }}</span>
+      </summary>
+      <div class="date-dropdown-menu">
+        <div class="date-field">
+          <label for="id_date_from">From</label>
+          {{ form.date_from }}
+        </div>
+        <div class="date-field">
+          <label for="id_date_to">To</label>
+          {{ form.date_to }}
+        </div>
+        <div class="date-dropdown-actions">
+          {% if date_active %}
+            <a class="date-clear-link" href="#" onclick="document.getElementById('id_date_from').value=''; document.getElementById('id_date_to').value=''; this.closest('form').submit(); return false;">Clear</a>
+          {% endif %}
+          <button type="submit">Apply</button>
+        </div>
+      </div>
+    </details>
   </div>
 
 
@@ -99,5 +114,12 @@
     form.elements.password.value = password;
     return true;
   }
+
+  document.addEventListener("click", function(e) {
+    var dd = document.querySelector(".date-dropdown");
+    if (dd && dd.open && !dd.contains(e.target)) {
+      dd.removeAttribute("open");
+    }
+  });
 </script>
 {% endblock %}
